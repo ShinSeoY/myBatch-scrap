@@ -8,7 +8,7 @@
 <br/>
 
 ## 사용 스택
-Python3
-BeautifulSoup
-kafka
-apache airflow
+Python3 <br/>
+BeautifulSoup <br/>
+kafka <br/>
+apache airflow <br/>
