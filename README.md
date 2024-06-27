@@ -1,4 +1,4 @@
-# 오늘의 환율 scraping
+# 오늘의 환율 Scraping
 
 환율정보 제공 및 환율 계산, Email SMS 환율 알림 프로젝트
 <br/>
@@ -8,4 +8,7 @@
 <br/>
 
 ## 사용 스택
-Py
+Python3
+BeautifulSoup
+kafka
+apache airflow
