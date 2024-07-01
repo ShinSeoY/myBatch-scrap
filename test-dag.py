@@ -28,12 +28,12 @@ def _complete():
 
 # DAG 틀 설정
 with DAG(
-    dag_id="test-dag-02",
-    schedule="* * * * *", 
+    dag_id="test-dag-03",
+    schedule_interval="* * * * *", 
     default_args=default_args,
     # tags=["naver", "search", "local", "api", "pipeline"],
     # catchup을 True로 하면, start_date 부터 현재까지 못돌린 날들을 채운다
-    # catchup=False
+    catchup=False
     ) as dag:
 
     # 대그 완료 출력

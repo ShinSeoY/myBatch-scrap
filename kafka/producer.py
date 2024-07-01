@@ -5,13 +5,9 @@ from bs4 import BeautifulSoup
 import json
 
 # Kafka 설정
-isLocal = True
-hostname = 'localhost' if isLocal else '13.60.3.214'
-
-# brokers = [f'{hostname}:9091', f'{hostname}:9092', f'{hostname}:9093']
 brokers = ['kafka1:19091', 'kafka2:19092', 'kafka3:19093']
-
-topic = 'my-topic'
+# brokers = ['localhost:9091', 'localhost:9092', 'localhost:9093']
+topic = 'my-topic5'
 
 producer = KafkaProducer(
     acks=1,
