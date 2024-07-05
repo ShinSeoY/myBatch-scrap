@@ -3,7 +3,6 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
-# .env 파일 로드 (경로를 정확히 지정)
 load_dotenv()
 
 db_config = {

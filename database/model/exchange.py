@@ -1,11 +1,23 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, String, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
 class Exchange(Base):
-    __tablename__ = "exchanges"
+    __tablename__ = "exchange"
 
-    id = Column(Integer, primary_key=True, index=True)
-    currency_pair = Column(String(10), index=True)
-    rate = Column(Float)
+    unit = Column(String, primary_key=True, index=True)
+    name = Column(String)
+    kr_unit = Column(String)
+    deal_bas_r = Column(Float)
+    exchange_rate = Column(Float)
+    ttb = Column(Float)
+    tts = Column(Float)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
+    
+    def __repr__(self):
+        return f"<ExchangeRate(id={self.id}, unit={self.unit}, name={self.name})>"
+    
+    
