@@ -4,21 +4,52 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime, timedelta
+from scrap_exchange import get_webpage, extract_information
+from database.db_config import get_db, engine
+from database.model.exchange import Base, Exchange
+from kafka_util.producer import sender
+
+Base.metadata.create_all(bind=engine)
+db = next(get_db())
 
 def parsing(**kwargs):
     #여기서 scrap
     logging.info("....parsing step")
-    v = [{"unit": 'USD', "krUnit":'달러'}, {"unit": 'YEN', "krUnit":'엔'}]
+    exchangeObjList = []
+    scrapData = extract_information(get_webpage())
+    
+    for key,value in scrapData.items():
+        exchangeObj = {
+            "unit":value.get("exchangeCode"),
+            "name":value.get("name"),
+            "kr_unit":value.get("currencyName"),
+            "deal_basr":float(value.get("calcPrice"))
+            # ,
+            # exchange_rate=float(data.get("calcPrice")),  # Assuming exchange_rate is same as calcPrice
+            # ttb=0.0,  # Assuming ttb and tts are not provided in the JSON
+            # tts=0.0
+        }
+        exchangeObjList.append(exchangeObj)
+    
     context=kwargs['task_instance']
-    context.xcom_push(key='result', value=v)
-    raise TypeError("my erororororoororororororoorooorr")
+    context.xcom_push(key='exchangeObjList', value=exchangeObjList)
+    # raise TypeError("my erororororoororororororoorooorr")
     
 def saveExchange(**kwargs):
     # 여기서는 producer로 전송해야함
     logging.info("....saveExchange step")
     context=kwargs['task_instance']
-    result = context.xcom_pull(key='result')
-    logging.info(f"result........ : {result}")
+    exchangeObjList = context.xcom_pull(key='exchangeObjList')
+    logging.info(f"exchangeObjList........ : {exchangeObjList}")
+    
+    # exchangeList = [Exchange(**exchangeObj) for exchangeObj in exchangeObjList]
+    
+    sender(exchangeObjList)
+    # for exchange in exchangeList:
+    #     db.add(exchange)
+    # db.commit()
+    # for exchange in exchangeList:
+    #     db.refresh(exchange)
 
 def taskFailureHandler(context):
     ti = context['task_instance']
@@ -77,7 +108,7 @@ default_args = {
 
 # DAG 틀 설정
 with DAG(
-    dag_id="testDag---------03",
+    dag_id="dag-test-02",
     schedule_interval="0 * * * *", 
     default_args=default_args,
     catchup=False,

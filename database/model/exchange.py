@@ -7,10 +7,10 @@ Base = declarative_base()
 class Exchange(Base):
     __tablename__ = "exchange"
 
-    unit = Column(String, primary_key=True, index=True)
-    name = Column(String)
-    kr_unit = Column(String)
-    deal_bas_r = Column(Float)
+    unit = Column(String(50), primary_key=True, index=True)
+    name = Column(String(100))
+    kr_unit = Column(String(50))
+    deal_basr = Column(Float)
     exchange_rate = Column(Float)
     ttb = Column(Float)
     tts = Column(Float)
