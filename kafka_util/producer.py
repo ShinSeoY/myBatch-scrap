@@ -12,9 +12,10 @@ def sender(data):
         compression_type='gzip',  # 메시지 전달할 때 압축(None, gzip, snappy, lz4 등)
         bootstrap_servers=brokers,  # 전달하고자 하는 카프카 브로커의 주소 리스트
         value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8'),
-        connections_max_idle_ms=60000,  # 60초
-        request_timeout_ms=30000,  # 30초
-        max_block_ms=60000,  # 60초
+        batch_size=16384,  # 배치 크기 설정 바이트
+        linger_ms=100,  # 배치를 모으는 대기 시간
+        max_in_flight_requests_per_connection=5,  # 동시에 처리할 수 있는 요청 수
+        retries=3,  # 재시도 횟수
     )
     
     try:
@@ -26,4 +27,7 @@ def sender(data):
         print('[Data sent to Kafka]')
     except Exception as e:
         print(e)
+    finally:
+        producer.flush()
+
 
