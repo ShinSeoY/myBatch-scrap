@@ -9,6 +9,8 @@ from database.db_config import get_db, engine
 from database.model.exchange import Base, Exchange
 from database.model.batch_status import Base, BatchStatus
 from kafka_util.producer import sender
+import time
+import random
 
 Base.metadata.create_all(bind=engine)
 db = next(get_db())
@@ -16,6 +18,10 @@ db = next(get_db())
 # scraping
 def parsing(**kwargs):
     logging.info("*** parsing step")
+    # 1-3분 사이의 랜덤한 시간 동안 대기
+    wait_time = random.randint(60, 180)
+    time.sleep(wait_time)
+    
     exchangeObjList = []
     scrapData = extract_information(get_webpage())
     
@@ -93,7 +99,7 @@ default_args = {
 
 with DAG(
     dag_id="save-exchange",
-    schedule_interval="0 * * * *", 
+    schedule_interval="* * * * *", # 1분마다 실행
     default_args=default_args,
     catchup=False,
     on_success_callback=dagSuccessCallback,
