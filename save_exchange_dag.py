@@ -1,19 +1,24 @@
+import json
 import logging
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime, timedelta
+
+import requests
 from scrap_exchange import get_webpage, extract_information
-from database.db_config import get_db, engine
+from spring_server_api import saveBatchStatus
+from database.db_config import SessionLocal, get_db, engine
 from database.model.exchange import Base, Exchange
-from database.model.batch_status import Base, BatchStatus
+# from database.model.batch_status import Base, BatchStatus
+from database.dto.batch_status import BatchStatus
 from kafka_util.producer import sender
 import time
 import random
 
-Base.metadata.create_all(bind=engine)
-db = next(get_db())
+# Base.metadata.create_all(bind=engine)
+# db = next(get_db())
 
 # scraping
 def parsing(**kwargs):
@@ -52,7 +57,7 @@ def taskFailureHandler(context):
         'task_id': ti.task_id,
         'error': str(context.get('exception'))
     })
-
+    
 def dagSuccessCallback(context):
     saveBatchStatus(buildBatchStatus(context, False))
 
@@ -60,35 +65,23 @@ def dagFailureCallback(context):
     saveBatchStatus(buildBatchStatus(context, True))
 
 def buildBatchStatus(context, isFailed):
-    dagRun = context['dag_run']
+    dag_run = context['dag_run']
     failedTaskInstance = context['task_instance'].xcom_pull(key='failed_task')
     
     batchStatus = BatchStatus(
-        run_id=dagRun.run_id,
-        dag_name = dagRun.dag_id,
-        status=dagRun.state,
-        start_time=dagRun.start_date,
-        end_time=dagRun.end_date,
-        duration=(dagRun.end_date - dagRun.start_date).total_seconds(),
+        workflow_id=dag_run.run_id,
+        workflow_name = dag_run.dag_id,
+        status = dag_run.state,
+        start_time= dag_run.start_date,
+        end_time= dag_run.end_date,
+        duration = int((dag_run.end_date - dag_run.start_date).total_seconds() * 1000)
     )
     
     if isFailed:
         batchStatus.failed_step_name = failedTaskInstance.get("task_id", "-") if isinstance(failedTaskInstance, dict) else "-"
         batchStatus.err_msg = failedTaskInstance.get("error", "-") if isinstance(failedTaskInstance, dict) else "-"
     return batchStatus
-    
-def saveBatchStatus(batchStatus):
-    logging.info("*** save batch status")
-    with next(get_db()) as db:
-        try:
-            db.add(batchStatus)
-            db.commit()
-            db.refresh(batchStatus)
-            logging.info(f"*** batchStatus : {str(batchStatus)}")
-        except Exception as e:
-            db.rollback()
-            logging.error(f"*** Error saving BatchStatus: {e}")
- 
+
 default_args = {
     'owner': 'seoyoung',
     'depends_on_past': False,
@@ -126,3 +119,18 @@ with DAG(
     )
     
     parsing_task >> save_exchange_task >> completed_task
+
+
+
+# def saveBatchStatus(batchStatus):
+#     logging.info("*** save batch status")
+#     with next(get_db()) as db:
+#         try:
+#             db.add(batchStatus)
+#             db.commit()
+#             db.refresh(batchStatus)
+#             logging.info(f"*** batchStatus : {str(batchStatus)}")
+#         except Exception as e:
+#             db.rollback()
+#             logging.error(f"*** Error saving BatchStatus: {e}")
+ 
